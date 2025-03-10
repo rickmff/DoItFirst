@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>doitfirst Options</title>
+  <style>
+    :root {
+      --primary-color: #E6B420;
+      --primary-hover: #d1a31d;
+      --background-color: #121213;
+      --card-background: #1a1a1b;
+      --text-color: #9E9D9B;
+      --text-secondary: #292D35;
+      --border-color: #292D35;
+      --success-color: #4CAF50;
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --font-family: 'Roboto', sans-serif;
+    }
+    
+    body {
+      font-family: var(--font-family);
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px;
+      color: var(--text-color);
+      background-color: var(--background-color);
+    }
+    
+    h1 {
+      color: var(--primary-color);
+      font-size: 24px;
+      margin-bottom: 24px;
+      letter-spacing: -0.025em;
+    }
+    
+    .option-group {
+      margin-bottom: 24px;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background-color: var(--card-background);
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+    
+    input[type="checkbox"] {
+      margin-right: 8px;
+      accent-color: var(--primary-color);
+    }
+    
+    p {
+      margin-top: 8px;
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+    
+    button {
+      padding: 12px 24px;
+      background-color: var(--primary-color);
+      color: var(--background-color);
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      font-size: 16px;
+      font-family: var(--font-family);
+    }
+    
+    button:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    .status {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: var(--radius-md);
+      display: none;
+      background-color: var(--card-background);
+      border: 1px solid var(--border-color);
+    }
+    
+    .success {
+      border-color: var(--success-color);
+      color: var(--success-color);
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>doitfirst Options</h1>
+  
+  <div class="option-group">
+    <label>
+      <input type="checkbox" id="always-show-modal">
+      Always show modal when visiting social media sites
+    </label>
+    <p>If unchecked, the modal will only appear once per session.</p>
+  </div>
+  
+  <div class="option-group">
+    <label>
+      <input type="checkbox" id="clear-todos-daily">
+      Clear completed todos daily
+    </label>
+    <p>Automatically clear completed todos at the start of each day.</p>
+  </div>
+
+  <div class="option-group">
+    <h2>Enabled Platforms</h2>
+    <label>
+      <input type="checkbox" id="enable-twitter" checked>
+      Twitter/X
+    </label>
+    <label>
+      <input type="checkbox" id="enable-youtube" checked>
+      YouTube
+    </label>
+    <label>
+      <input type="checkbox" id="enable-instagram" checked>
+      Instagram
+    </label>
+    <label>
+      <input type="checkbox" id="enable-tiktok" checked>
+      TikTok
+    </label>
+  </div>
+  
+  <button id="save">Save Options</button>
+  
+  <div id="status" class="status"></div>
+  
+  <script src="options.js"></script>
+</body>
+</html> 
