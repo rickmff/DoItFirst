@@ -42,6 +42,12 @@ html[data-doitfirst-hide-recommendations] .ytp-fullscreen-grid {
   display: none !important;
 }
 
+/* With nothing left in the column, give its space back to the video.
+   Stays when it holds a playlist, live chat or an open panel such as the transcript. */
+html[data-doitfirst-hide-recommendations] ytd-watch-flexy #secondary:not(:has(ytd-playlist-panel-video-renderer)):not(:has(ytd-live-chat-frame:not([hidden]))):not(:has(ytd-engagement-panel-section-list-renderer[visibility="ENGAGEMENT_PANEL_VISIBILITY_EXPANDED"])) {
+  display: none !important;
+}
+
 /* The top left corner is YouTube's menu and logo, so the timer goes to the bottom */
 html #doitfirst-timer {
   top: auto;

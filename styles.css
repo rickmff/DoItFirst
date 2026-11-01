@@ -8,6 +8,8 @@
   --card-background: #1a1a1b;
   --text-color: #9E9D9B;
   --text-secondary: #9E9D9B;
+  --text-on-site: #F1F0EE; /* For controls that sit on the site, which may be light */
+  --surface-on-site: rgba(18, 18, 19, 0.92);
   --border-color: #292D35;
   --success-color: #4CAF50;
   --warning-color: #FF9800;
@@ -442,7 +444,7 @@ li.completed .todo-text {
   visibility: hidden !important;
 }
 
-#doitfirst-footer.visible {
+body:has(#doitfirst-modal) #doitfirst-footer.visible {
   opacity: 1;
   visibility: visible;
 }
@@ -538,15 +540,30 @@ li.completed .todo-text {
   pointer-events: all;
 }
 
-/* Floating buttons when shown next to timer */
+/* Floating buttons next to the timer stay hidden until it's hovered, so they don't cover the page.
+   The left padding bridges the gap, so the pointer can reach them without leaving. */
 #doitfirst-floating-buttons.timer-hover {
   top: 20px;
-  left: 110px;
-  opacity: 1;
+  left: 84px;
+  padding-left: 12px;
+  gap: 8px;
+  opacity: 0;
   visibility: visible;
   transform: translateX(0);
-  animation: slideInFromLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  pointer-events: none;
+}
+
+body:has(#doitfirst-timer:hover) #doitfirst-floating-buttons.timer-hover,
+body:has(.settings-panel.visible) #doitfirst-floating-buttons.timer-hover,
+#doitfirst-floating-buttons.timer-hover:hover,
+#doitfirst-floating-buttons.timer-hover:focus-within {
+  opacity: 1;
   pointer-events: all;
+}
+
+#doitfirst-floating-buttons.timer-hover button {
+  width: 34px;
+  height: 34px;
 }
 
 /* When modal is active, position buttons in the top left */
@@ -557,18 +574,6 @@ body:has(#doitfirst-modal) #doitfirst-floating-buttons {
   visibility: visible;
   transform: translateY(0);
   pointer-events: all;
-  animation: none;
-}
-
-@keyframes slideInFromLeft {
-  0% {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 #doitfirst-keyboard-btn {
@@ -581,9 +586,9 @@ body:has(#doitfirst-modal) #doitfirst-floating-buttons {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: rgba(18, 18, 19, 0.7);
+  background-color: var(--surface-on-site);
   border: 1px solid var(--border-color);
-  color: var(--text-color);
+  color: var(--text-on-site);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -614,12 +619,13 @@ body:has(#doitfirst-modal) #doitfirst-floating-buttons {
   position: fixed;
   top: 20px;
   left: 20px;
-  background-color: rgba(18, 18, 19, 0.7);
-  color: var(--text-color);
+  background-color: var(--surface-on-site);
+  color: var(--text-on-site);
   font-family: var(--font-family);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  padding: 10px 16px;
+  font-variant-numeric: tabular-nums;
+  padding: 8px 12px;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   opacity: 0;
@@ -639,7 +645,7 @@ body:has(#doitfirst-modal) #doitfirst-floating-buttons {
 }
 
 #doitfirst-timer:hover {
-  background-color: rgba(18, 18, 19, 0.9);
+  background-color: rgba(18, 18, 19, 1);
   color: var(--primary-color);
   border-color: var(--primary-color);
   transform: translateY(-2px);
@@ -734,7 +740,7 @@ body:has(#doitfirst-modal) #doitfirst-floating-buttons {
 /* Settings panel */
 .settings-panel {
   position: fixed;
-  background-color: rgba(26, 26, 27, 0.8);
+  background-color: rgba(26, 26, 27, 0.97);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 16px;
