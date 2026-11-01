@@ -1,15 +1,19 @@
 # doitfirst
 
-A Chrome extension that replaces social media feeds (Twitter/X, YouTube, Instagram, TikTok) with a productivity-focused todo list and limits scrolling time.
+A Chrome extension that makes you finish your todo list before you can use social media (Twitter/X, YouTube, Instagram, TikTok), then limits how long you stay.
 
 ## Features
 
-- **Feed Replacement**: Replaces social media feeds with a clean, modern todo list
-- **Time Limiting**: Automatically limits scrolling time to 5 minutes (configurable)
-- **Todo Management**: Add, complete, and delete tasks
-- **Filtering**: Filter tasks by all, active, or completed
-- **Persistent Storage**: Your todos are saved between sessions
-- **Multi-platform**: Works on Twitter/X, YouTube, Instagram, and TikTok
+- **Task Gate**: A modal covers the site until you add tasks and complete all of them
+- **Time Limiting**: A configurable timer (25 minutes by default) brings the modal back when it ends
+- **Shared Session**: The time left is kept per site, so reloading or opening a new tab doesn't refill it
+- **Background Playback Counts**: A hidden tab only pauses the timer if nothing is playing in it
+- **One Task per Session**: When the time runs out, a new task has to be added and completed to continue
+- **Media Pausing**: Videos stop and fullscreen closes while the modal is open
+- **Hide YouTube Shorts**: Removes Shorts from the feed, search and sidebar, and opens Shorts links in the normal player
+- **Hide YouTube Distractions**: Removes the home feed and the recommended videos around the player
+- **Persistent Storage**: Your todos and settings sync through your Chrome account
+- **Keyboard Shortcuts**: Add, navigate, complete and delete tasks without the mouse
 
 ## Installation
 
@@ -31,14 +35,11 @@ A Chrome extension that replaces social media feeds (Twitter/X, YouTube, Instagr
 
 ## Usage
 
-1. Visit any supported social media site (Twitter/X, YouTube, Instagram, TikTok)
-2. The feed will automatically be replaced with the todo list
-3. Add new tasks using the input field at the top
-4. Click the checkbox to mark tasks as completed
-5. Use the filter buttons to view different task states
-6. The timer will start when you begin scrolling
-7. When the time limit is reached, scrolling will be disabled
-8. Click "Reset Timer" to reset the time limit or "Add 5 More Minutes" when prompted
+1. Visit any supported site (Twitter/X, YouTube, Instagram, TikTok)
+2. Add tasks in the modal and check them off
+3. Click "Continue" once all tasks are complete to start the timer
+4. When the timer ends, the modal comes back and asks for a new task
+5. Use the gear icon or the extension's options page to change the timer, the enabled sites and what gets hidden on YouTube
 
 ## Customization
 
@@ -46,6 +47,7 @@ You can modify the following files to customize the extension:
 
 - `content.js`: Main functionality
 - `styles.css`: Visual appearance
+- `youtube.js` and `youtube.css`: YouTube-only tweaks, such as hiding Shorts
 - `manifest.json`: Extension configuration
 
 ## License

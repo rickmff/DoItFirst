@@ -1,10 +1,9 @@
 {
     "manifest_version": 3,
     "name": "doitfirst",
-    "version": "1.0",
-    "description": "Block social media sites with a todo list modal until you complete a task",
+    "version": "1.1",
+    "description": "Block social media with a todo list until you finish your tasks, and hide YouTube Shorts and recommendations",
     "permissions": [
-      "activeTab",
       "storage"
     ],
     "content_scripts": [
@@ -22,6 +21,15 @@
         "js": ["content.js"],
         "css": ["styles.css"],
         "run_at": "document_idle"
+      },
+      {
+        "matches": [
+          "*://www.youtube.com/*",
+          "*://youtube.com/*"
+        ],
+        "js": ["youtube.js"],
+        "css": ["youtube.css"],
+        "run_at": "document_start"
       }
     ],
     "options_ui": {

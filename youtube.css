@@ -1,0 +1,54 @@
+/* Shorts shelves, on the home page, search results and channel pages */
+html[data-doitfirst-hide-shorts] ytd-rich-section-renderer:has(ytd-rich-shelf-renderer[is-shorts]),
+html[data-doitfirst-hide-shorts] ytd-rich-shelf-renderer[is-shorts],
+html[data-doitfirst-hide-shorts] ytd-reel-shelf-renderer,
+html[data-doitfirst-hide-shorts] grid-shelf-view-model:has(ytm-shorts-lockup-view-model),
+html[data-doitfirst-hide-shorts] ytm-shorts-lockup-view-model,
+html[data-doitfirst-hide-shorts] ytm-shorts-lockup-view-model-v2,
+/* Shorts mixed in with regular videos */
+html[data-doitfirst-hide-shorts] ytd-rich-item-renderer:has(a[href^="/shorts/"]),
+html[data-doitfirst-hide-shorts] ytd-video-renderer:has(a[href^="/shorts/"]),
+html[data-doitfirst-hide-shorts] ytd-grid-video-renderer:has(a[href^="/shorts/"]),
+html[data-doitfirst-hide-shorts] ytd-compact-video-renderer:has(a[href^="/shorts/"]),
+/* Sidebar entries and the channel tab */
+html[data-doitfirst-hide-shorts] ytd-guide-entry-renderer:has(a[href^="/shorts"]),
+html[data-doitfirst-hide-shorts] ytd-guide-entry-renderer:has(a[title="Shorts"]),
+html[data-doitfirst-hide-shorts] ytd-mini-guide-entry-renderer:has(a[href^="/shorts"]),
+html[data-doitfirst-hide-shorts] yt-tab-shape[tab-title="Shorts"] {
+  display: none !important;
+}
+
+/* Home feed: the grid goes away and search stays, with a note so the page doesn't look broken */
+html[data-doitfirst-hide-home-feed] ytd-browse[page-subtype="home"] ytd-rich-grid-renderer {
+  display: none !important;
+}
+
+html[data-doitfirst-hide-home-feed] ytd-browse[page-subtype="home"]::before {
+  content: "Home feed hidden by doitfirst. Search for what you came here to watch.";
+  display: block;
+  width: 100%;
+  padding: 80px 24px;
+  text-align: center;
+  font-size: 16px;
+  color: var(--yt-spec-text-secondary, #9E9D9B);
+}
+
+/* Recommended videos next to the player, in the end screen and in fullscreen.
+   Playlists and live chat sit in the same column and stay visible. */
+html[data-doitfirst-hide-recommendations] ytd-watch-next-secondary-results-renderer,
+html[data-doitfirst-hide-recommendations] .html5-endscreen,
+html[data-doitfirst-hide-recommendations] .ytp-ce-element,
+html[data-doitfirst-hide-recommendations] .ytp-fullscreen-grid {
+  display: none !important;
+}
+
+/* The top left corner is YouTube's menu and logo, so the timer goes to the bottom */
+html #doitfirst-timer {
+  top: auto;
+  bottom: 20px;
+}
+
+html #doitfirst-floating-buttons.timer-hover {
+  top: auto;
+  bottom: 20px;
+}

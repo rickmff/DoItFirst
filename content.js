@@ -8,28 +8,36 @@
  * - Responsive UI with custom styling
  * - Multi-platform support for Twitter/X, YouTube, Instagram, and TikTok
  */
+const DEFAULT_OPTIONS = {
+  alwaysShowModal: true,
+  clearTodosDaily: false,
+  timerDuration: 25 * 60, // 25 minutes in seconds
+  hideShorts: true,
+  hideHomeFeed: true,
+  hideRecommendations: true,
+  enabledPlatforms: {
+    twitter: true,
+    youtube: true,
+    instagram: true,
+    tiktok: true
+  }
+};
+
+// A longer gap between ticks means the computer was asleep, not that time was spent here
+const MAX_TICK_SECONDS = 120;
+
 class DoItFirst {
   constructor() {
     this.todos = [];
     this.modalActive = true;
-    this.options = {
-      alwaysShowModal: true,
-      clearTodosDaily: false,
-      timerDuration: 25 * 60, // 25 minutes in seconds
-      enabledPlatforms: {
-        twitter: true,
-        youtube: true,
-        instagram: true,
-        tiktok: true
-      }
-    };
+    this.options = { ...DEFAULT_OPTIONS };
     this.timer = null;
     this.remainingTime = this.options.timerDuration;
     this.lastTimerUpdate = null; // Track when the timer was last updated
+    this.sessionUpdatedAt = 0; // When any tab on this site last spent time
+    this.newTaskSince = null; // Set when a session ends: only a task created after this unlocks the next one
     this.hideCompleted = false; // Add this line to track completed tasks visibility
     this.currentPlatform = this.detectPlatform();
-    this.loadOptions();
-    this.loadTodos();
   }
 
   /**
@@ -54,31 +62,66 @@ class DoItFirst {
 
   /**
    * Settings Management
-   * Loads user preferences from Chrome storage
+   * Loads user preferences and todos together, so nothing runs on defaults
    */
-  loadOptions() {
-    chrome.storage.sync.get(
-      {
-        alwaysShowModal: true,
-        clearTodosDaily: false,
-        timerDuration: 25 * 60, // 25 minutes in seconds
-        enabledPlatforms: {
-          twitter: true,
-          youtube: true,
-          instagram: true,
-          tiktok: true
-        }
-      },
-      (items) => {
-        this.options = items;
-        this.remainingTime = this.options.timerDuration;
-        
-        // If clearTodosDaily is enabled, check if we need to clear todos
-        if (this.options.clearTodosDaily) {
-          this.checkDailyClear();
+  loadState(callback) {
+    chrome.storage.sync.get({ ...DEFAULT_OPTIONS, todos: [] }, (items) => {
+      const { todos, ...options } = items;
+
+      this.todos = todos;
+      this.options = {
+        ...options,
+        enabledPlatforms: { ...DEFAULT_OPTIONS.enabledPlatforms, ...options.enabledPlatforms }
+      };
+      this.remainingTime = this.options.timerDuration;
+
+      // If clearTodosDaily is enabled, check if we need to clear todos
+      if (this.options.clearTodosDaily) {
+        this.checkDailyClear();
+      }
+
+      this.loadSession(callback);
+    });
+  }
+
+  /**
+   * Session Persistence
+   * Keeps the time left per site, so reloading or opening a new tab doesn't refill it.
+   * Uses storage.local because it's written every second, too often for storage.sync.
+   */
+  sessionKey() {
+    return `session:${this.currentPlatform}`;
+  }
+
+  loadSession(callback) {
+    const key = this.sessionKey();
+
+    chrome.storage.local.get([key], (items) => {
+      const session = items[key];
+
+      if (session) {
+        this.newTaskSince = session.newTaskSince;
+        this.sessionUpdatedAt = session.updatedAt || 0;
+
+        // Time left over from an earlier day doesn't carry over
+        if (session.day === new Date().toDateString()) {
+          this.remainingTime = Math.min(session.remainingTime, this.options.timerDuration);
         }
       }
-    );
+
+      callback();
+    });
+  }
+
+  saveSession() {
+    chrome.storage.local.set({
+      [this.sessionKey()]: {
+        remainingTime: this.remainingTime,
+        newTaskSince: this.newTaskSince,
+        updatedAt: this.lastTimerUpdate,
+        day: new Date().toDateString()
+      }
+    });
   }
 
   /**
@@ -88,14 +131,15 @@ class DoItFirst {
   checkDailyClear() {
     const today = new Date().toDateString();
     
-    chrome.storage.local.get(['lastClearDate'], (result) => {
+    chrome.storage.sync.get(['lastClearDate'], (result) => {
       if (!result.lastClearDate || result.lastClearDate !== today) {
         // Clear completed todos
         this.todos = this.todos.filter(todo => !todo.completed);
         this.saveTodos();
-        
+        this.renderTodos();
+
         // Update last clear date
-        chrome.storage.local.set({ lastClearDate: today });
+        chrome.storage.sync.set({ lastClearDate: today });
       }
     });
   }
@@ -105,14 +149,22 @@ class DoItFirst {
    * Sets up the extension's UI and event handlers
    */
   initialize() {
+    this.loadState(() => this.start());
+  }
+
+  start() {
     // Check if the current platform is enabled
     if (!this.options.enabledPlatforms[this.currentPlatform]) {
       console.log(`DoItFirst: ${this.currentPlatform} is disabled in settings`);
       return;
     }
 
+    // Registered once here: createModal runs again every time the timer ends
+    window.addEventListener('keydown', this.handleKeydown, true);
+    document.addEventListener('play', this.handleMediaPlay, true);
+
     // Check if we should show the modal
-    chrome.storage.local.get(['modalShownToday'], (result) => {
+    chrome.storage.sync.get(['modalShownToday'], (result) => {
       const today = new Date().toDateString();
       const modalShownToday = result.modalShownToday === today;
       
@@ -120,7 +172,7 @@ class DoItFirst {
       this.createFooter();
       
       // Only show modal if alwaysShowModal is true or if it hasn't been shown today
-      if (this.options.alwaysShowModal || !modalShownToday) {
+      if (this.options.alwaysShowModal || !modalShownToday || this.newTaskSince) {
         // Wait for the page to load
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', () => {
@@ -131,7 +183,7 @@ class DoItFirst {
         }
         
         // Mark that we've shown the modal today
-        chrome.storage.local.set({ modalShownToday: today });
+        chrome.storage.sync.set({ modalShownToday: today });
       } else {
         // If we're not showing the modal, start the timer immediately
         this.modalActive = false;
@@ -147,24 +199,22 @@ class DoItFirst {
       // Ensure reset button is hidden initially
       const resetBtn = document.getElementById('doitfirst-reset-btn');
       if (resetBtn && !this.timer) {
-        resetBtn.classList.add('hidden');
+        resetBtn.classList.add('doitfirst-hidden');
       }
     });
     
     // Add event listener for page visibility changes
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') {
-        // Page is being hidden (user navigated away or closed tab)
-        
-        // Clear the interval timer when page is hidden to save resources
-        if (this.timer) {
-          clearInterval(this.timer);
-          this.timer = null;
-        }
-      } else if (document.visibilityState === 'visible' && !this.modalActive) {
+      if (document.visibilityState === 'visible' && !this.modalActive) {
         // Page is visible again and modal is not active
-        // Restart timer
-        this.startTimer();
+        // Pick up the time left, which another tab on this site may have used
+        this.loadSession(() => {
+          if (this.newTaskSince) {
+            this.showTimeUpModal();
+          } else {
+            this.startTimer();
+          }
+        });
       }
     });
   }
@@ -221,7 +271,7 @@ class DoItFirst {
         </svg>
       `;
       // Initially hide the reset button
-      resetBtn.classList.add('hidden');
+      resetBtn.classList.add('doitfirst-hidden');
       
       floatingButtons.appendChild(keyboardBtn);
       floatingButtons.appendChild(settingsBtn);
@@ -280,7 +330,7 @@ class DoItFirst {
           <div class="setting-group">
             <label class="checkbox-label">
               <input type="checkbox" id="always-show-modal" ${this.options.alwaysShowModal ? 'checked' : ''}>
-              Always show modal when visiting X
+              Always show modal when visiting this site
             </label>
           </div>
           <div class="setting-group">
@@ -289,6 +339,22 @@ class DoItFirst {
               Clear completed todos daily
             </label>
           </div>
+          ${this.currentPlatform === 'youtube' ? `
+          <div class="setting-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="hide-shorts" ${this.options.hideShorts ? 'checked' : ''}>
+              Hide YouTube Shorts
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="hide-home-feed" ${this.options.hideHomeFeed ? 'checked' : ''}>
+              Hide home feed
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="hide-recommendations" ${this.options.hideRecommendations ? 'checked' : ''}>
+              Hide recommended videos
+            </label>
+          </div>
+          ` : ''}
           <div class="settings-btn-container">
             <button id="save-settings" class="save-settings-btn">Save Settings</button>
           </div>
@@ -302,7 +368,7 @@ class DoItFirst {
       // Create timer display
       const timerDisplay = document.createElement('div');
       timerDisplay.id = 'doitfirst-timer';
-      timerDisplay.classList.add('left-aligned');
+      timerDisplay.classList.add('doitfirst-element', 'left-aligned');
       timerDisplay.innerHTML = this.formatTime(this.remainingTime);
       document.body.appendChild(timerDisplay);
       
@@ -392,19 +458,29 @@ class DoItFirst {
       
       // Add event listeners for save settings button
       document.getElementById('save-settings').addEventListener('click', () => {
-        const timerDuration = parseInt(document.getElementById('timer-duration').value) * 60;
-        const alwaysShowModal = document.getElementById('always-show-modal').checked;
-        const clearTodosDaily = document.getElementById('clear-todos-daily').checked;
-        
-        this.options = {
-          timerDuration,
-          alwaysShowModal,
-          clearTodosDaily
+        const changes = {
+          timerDuration: parseInt(document.getElementById('timer-duration').value) * 60,
+          alwaysShowModal: document.getElementById('always-show-modal').checked,
+          clearTodosDaily: document.getElementById('clear-todos-daily').checked
         };
-        
-        this.remainingTime = timerDuration;
-        
-        chrome.storage.sync.set(this.options, () => {
+
+        // These only exist in the panel on YouTube
+        if (this.currentPlatform === 'youtube') {
+          changes.hideShorts = document.getElementById('hide-shorts').checked;
+          changes.hideHomeFeed = document.getElementById('hide-home-feed').checked;
+          changes.hideRecommendations = document.getElementById('hide-recommendations').checked;
+        }
+
+        // Changing the duration never adds time to a session already in progress
+        const sessionStarted = this.remainingTime < this.options.timerDuration;
+
+        this.options = { ...this.options, ...changes };
+        this.remainingTime = sessionStarted
+          ? Math.min(this.remainingTime, changes.timerDuration)
+          : changes.timerDuration;
+        this.saveSession();
+
+        chrome.storage.sync.set(changes, () => {
           this.updateTimerDisplay();
           // Close the settings panel after saving
           const settingsPanel = document.getElementById('doitfirst-settings-panel');
@@ -421,6 +497,12 @@ class DoItFirst {
    * Creates the main modal interface for todo management
    */
   createModal() {
+    if (document.getElementById('doitfirst-modal')) {
+      return;
+    }
+
+    this.pauseMedia();
+
     // Create modal overlay
     const modal = document.createElement('div');
     modal.id = 'doitfirst-modal';
@@ -540,113 +622,6 @@ class DoItFirst {
     const clearCompletedBtn = document.getElementById('clear-completed');
     const addTodoBtn = document.getElementById('add-todo-btn');
     const toggleCompletedBtn = document.getElementById('toggle-completed');
-    const keyboardBtn = document.getElementById('doitfirst-keyboard-btn');
-    const keyboardTooltip = document.getElementById('doitfirst-keyboard-tooltip');
-    const resetBtn = document.getElementById('doitfirst-reset-btn');
-
-    // Add global keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      // Don't trigger shortcuts if user is typing in an input
-      if (e.target.tagName === 'INPUT' && e.key !== 'Enter') {
-        return;
-      }
-
-      switch (e.key.toLowerCase()) {
-        case 'a': // Focus input
-          e.preventDefault();
-          if (newTodoInput) {
-            newTodoInput.focus();
-          }
-          break;
-
-        case 'c': // Clear completed
-          e.preventDefault();
-          this.clearCompleted();
-          break;
-
-        case 't': // Toggle selected task
-          if (e.altKey) {
-            e.preventDefault();
-            const focusedTodo = document.activeElement;
-            if (focusedTodo && focusedTodo.tagName === 'LI') {
-              const todoId = parseInt(focusedTodo.dataset.id);
-              this.toggleTodoStatus(todoId);
-            }
-          }
-          break;
-
-        case 'd':
-        case 'delete': // Delete task
-          e.preventDefault();
-          const focusedItem = document.activeElement;
-          if (focusedItem && focusedItem.tagName === 'LI') {
-            const todoId = parseInt(focusedItem.dataset.id);
-            this.deleteTodo(todoId);
-          }
-          break;
-
-        case 'arrowup': // Navigate up
-          e.preventDefault();
-          this.navigateTodos('up');
-          break;
-
-        case 'arrowdown': // Navigate down
-          e.preventDefault();
-          this.navigateTodos('down');
-          break;
-
-        case ' ': // Space to toggle task
-          const focused = document.activeElement;
-          if (focused && focused.tagName === 'LI') {
-            e.preventDefault();
-            const todoId = parseInt(focused.dataset.id);
-            this.toggleTodoStatus(todoId);
-          }
-          break;
-
-        case 'enter':
-          // If a todo item is focused, do nothing (let the click handler handle it)
-          if (document.activeElement.tagName === 'LI') {
-            return;
-          }
-          // If the continue button is focused and enabled, click it
-          if (document.activeElement === continueBtn && !continueBtn.disabled) {
-            e.preventDefault();
-            continueBtn.click();
-          }
-          break;
-
-        case 'r': // Ctrl+Shift+R to reset timer
-          if (e.ctrlKey && e.shiftKey) {
-            e.preventDefault();
-            this.resetTimerAndShowModal();
-          }
-          break;
-      }
-    });
-
-    // Add navigation method
-    this.navigateTodos = (direction) => {
-      const todos = Array.from(todoList.querySelectorAll('li'));
-      if (!todos.length) return;
-
-      const currentFocus = document.activeElement;
-      let currentIndex = todos.indexOf(currentFocus);
-
-      if (currentIndex === -1) {
-        // If no todo is focused, focus the first one
-        todos[0].focus();
-        return;
-      }
-
-      if (direction === 'up') {
-        currentIndex = Math.max(0, currentIndex - 1);
-      } else {
-        currentIndex = Math.min(todos.length - 1, currentIndex + 1);
-      }
-
-      todos[currentIndex].focus();
-    };
 
     if (newTodoInput) {
       newTodoInput.addEventListener('keypress', (e) => {
@@ -676,6 +651,8 @@ class DoItFirst {
 
     if (continueBtn) {
       continueBtn.addEventListener('click', () => {
+        this.newTaskSince = null;
+        this.saveSession();
         this.dismissModal();
         this.startTimer();
       });
@@ -692,46 +669,142 @@ class DoItFirst {
         this.renderTodos();
       });
     }
+  }
 
-    // Add keyboard button event listeners
-    if (keyboardBtn) {
-      keyboardBtn.addEventListener('mouseenter', () => {
-        if (keyboardTooltip) {
-          // Position the tooltip below the button
-          const btnRect = keyboardBtn.getBoundingClientRect();
-          keyboardTooltip.style.top = (btnRect.bottom + 10) + 'px';
-          keyboardTooltip.style.left = (btnRect.left) + 'px';
-          keyboardTooltip.classList.add('visible');
-        }
-      });
-      
-      keyboardBtn.addEventListener('mouseleave', () => {
-        if (keyboardTooltip) {
-          // Add a small delay before hiding to allow moving to the tooltip
-          setTimeout(() => {
-            // Check if mouse is over the tooltip
-            const isOverTooltip = document.querySelector('#doitfirst-keyboard-tooltip:hover');
-            if (!isOverTooltip) {
-              keyboardTooltip.classList.remove('visible');
-            }
-          }, 100);
-        }
-      });
+  /**
+   * Keyboard Shortcuts
+   * Captured on window so the modal gets keys before the site's own hotkeys
+   */
+  handleKeydown = (e) => {
+    const key = (e.key || '').toLowerCase();
+
+    // Ctrl+Shift+R to reset timer
+    if (key === 'r' && e.ctrlKey && e.shiftKey) {
+      e.preventDefault();
+      this.resetTimerAndShowModal();
+      return;
     }
-    
-    // Add event listener for the tooltip itself
-    if (keyboardTooltip) {
-      keyboardTooltip.addEventListener('mouseleave', () => {
-        keyboardTooltip.classList.remove('visible');
-      });
+
+    // Everything else belongs to the modal; leave the site's keys alone otherwise
+    if (!document.getElementById('doitfirst-modal')) {
+      return;
     }
-    
-    if (resetBtn) {
-      resetBtn.addEventListener('click', () => {
-        this.resetTimerAndShowModal();
-      });
+
+    // Stop YouTube's hotkeys (k, j, l, space...) from firing behind the modal
+    e.stopPropagation();
+
+    // Don't trigger shortcuts if user is typing in an input or using Ctrl/Cmd combos
+    if (e.ctrlKey || e.metaKey || (e.target.tagName === 'INPUT' && e.key !== 'Enter')) {
+      return;
+    }
+
+    const continueBtn = document.getElementById('continue-procrastinate');
+
+    switch (key) {
+      case 'a': // Focus input
+        e.preventDefault();
+        document.getElementById('new-todo')?.focus();
+        break;
+
+      case 'c': // Clear completed
+        e.preventDefault();
+        this.clearCompleted();
+        break;
+
+      case 't': // Toggle selected task
+        if (e.altKey) {
+          e.preventDefault();
+          const focusedTodo = document.activeElement;
+          if (focusedTodo && focusedTodo.tagName === 'LI') {
+            const todoId = parseInt(focusedTodo.dataset.id);
+            this.toggleTodoStatus(todoId);
+          }
+        }
+        break;
+
+      case 'd':
+      case 'delete': // Delete task
+        e.preventDefault();
+        const focusedItem = document.activeElement;
+        if (focusedItem && focusedItem.tagName === 'LI') {
+          const todoId = parseInt(focusedItem.dataset.id);
+          this.deleteTodo(todoId);
+        }
+        break;
+
+      case 'arrowup': // Navigate up
+        e.preventDefault();
+        this.navigateTodos('up');
+        break;
+
+      case 'arrowdown': // Navigate down
+        e.preventDefault();
+        this.navigateTodos('down');
+        break;
+
+      case ' ': // Space to toggle task
+        const focused = document.activeElement;
+        if (focused && focused.tagName === 'LI') {
+          e.preventDefault();
+          const todoId = parseInt(focused.dataset.id);
+          this.toggleTodoStatus(todoId);
+        }
+        break;
+
+      case 'enter':
+        // If a todo item is focused, do nothing (let the click handler handle it)
+        if (document.activeElement.tagName === 'LI') {
+          return;
+        }
+        // If the continue button is focused and enabled, click it
+        if (document.activeElement === continueBtn && !continueBtn.disabled) {
+          e.preventDefault();
+          continueBtn.click();
+        }
+        break;
+    }
+  };
+
+  navigateTodos(direction) {
+    const todoList = document.getElementById('todo-list');
+    const todos = Array.from(todoList.querySelectorAll('li'));
+    if (!todos.length) return;
+
+    const currentFocus = document.activeElement;
+    let currentIndex = todos.indexOf(currentFocus);
+
+    if (currentIndex === -1) {
+      // If no todo is focused, focus the first one
+      todos[0].focus();
+      return;
+    }
+
+    if (direction === 'up') {
+      currentIndex = Math.max(0, currentIndex - 1);
+    } else {
+      currentIndex = Math.min(todos.length - 1, currentIndex + 1);
+    }
+
+    todos[currentIndex].focus();
+  }
+
+  /**
+   * Media Control
+   * Keeps videos stopped while the modal is open, and leaves fullscreen so it can be seen
+   */
+  pauseMedia() {
+    document.querySelectorAll('video, audio').forEach(media => media.pause());
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
     }
   }
+
+  handleMediaPlay = (e) => {
+    if (document.getElementById('doitfirst-modal')) {
+      e.target.pause();
+    }
+  };
 
   /**
    * Modal Management
@@ -800,7 +873,7 @@ class DoItFirst {
     const timerDisplay = document.getElementById('doitfirst-timer');
     
     if (resetBtn) {
-      resetBtn.classList.remove('hidden');
+      resetBtn.classList.remove('doitfirst-hidden');
     }
     
     if (floatingButtons) {
@@ -823,35 +896,99 @@ class DoItFirst {
     this.lastTimerUpdate = Date.now();
     
     // Start the timer
-    this.timer = setInterval(() => {
-      this.remainingTime--;
-      this.updateTimerDisplay();
-      
-      // When timer reaches zero, show the modal again
-      if (this.remainingTime <= 0) {
+    this.timer = setInterval(() => this.tick(), 1000);
+  }
+
+  /**
+   * Timer Tick
+   * Counts real time instead of ticks, because Chrome slows timers in background tabs.
+   * The time left is shared, so it's read fresh and two tabs don't spend it twice.
+   */
+  tick() {
+    // A hidden tab only spends time while it's still playing something
+    if (document.visibilityState === 'hidden' && !this.isMediaPlaying()) {
+      this.lastTimerUpdate = Date.now();
+      return;
+    }
+
+    this.loadSession(() => {
+      if (!this.timer) {
+        return;
+      }
+
+      // Another tab on this site used up the time
+      if (this.newTaskSince) {
         clearInterval(this.timer);
         this.timer = null;
-        
-        // Set modal active first to ensure timer is hidden
-        this.modalActive = true;
-        
-        // Reset the timer to the configured duration
-        this.remainingTime = this.options.timerDuration;
-        
-        // Explicitly hide the timer display
-        const timerDisplay = document.getElementById('doitfirst-timer');
-        if (timerDisplay) {
-          timerDisplay.classList.remove('visible');
-          timerDisplay.style.opacity = '0';
-          timerDisplay.style.visibility = 'hidden';
-        }
-        
-        // Create modal after hiding timer
-        this.createModal();
+        this.showTimeUpModal();
+        return;
       }
-    }, 1000);
+
+      const now = Date.now();
+      const spentUntil = Math.max(this.lastTimerUpdate, this.sessionUpdatedAt);
+      const elapsed = Math.floor((now - spentUntil) / 1000);
+
+      if (elapsed < 1) {
+        return;
+      }
+
+      if (elapsed > MAX_TICK_SECONDS) {
+        this.lastTimerUpdate = now;
+      } else {
+        this.lastTimerUpdate = spentUntil + elapsed * 1000;
+        this.remainingTime = Math.max(0, this.remainingTime - elapsed);
+      }
+
+      this.updateTimerDisplay();
+
+      // When timer reaches zero, show the modal again
+      if (this.remainingTime <= 0) {
+        this.endSession();
+        return;
+      }
+
+      this.saveSession();
+    });
   }
-  
+
+  isMediaPlaying() {
+    return Array.from(document.querySelectorAll('video, audio')).some(media => !media.paused && !media.ended);
+  }
+
+  /**
+   * Session End
+   * The next session has to be earned with a new task, not just by clicking Continue
+   */
+  endSession() {
+    clearInterval(this.timer);
+    this.timer = null;
+    this.remainingTime = this.options.timerDuration;
+    this.newTaskSince = Date.now();
+    this.saveSession();
+    this.showTimeUpModal();
+  }
+
+  showTimeUpModal() {
+    // Set modal active first to ensure timer is hidden
+    this.modalActive = true;
+
+    const resetBtn = document.getElementById('doitfirst-reset-btn');
+    if (resetBtn) {
+      resetBtn.classList.add('doitfirst-hidden');
+    }
+
+    // Explicitly hide the timer display
+    const timerDisplay = document.getElementById('doitfirst-timer');
+    if (timerDisplay) {
+      timerDisplay.classList.remove('visible');
+      timerDisplay.style.opacity = '0';
+      timerDisplay.style.visibility = 'hidden';
+    }
+
+    // Create modal after hiding timer
+    this.createModal();
+  }
+
   /**
    * Timer UI
    * Updates the timer display and handles visual states
@@ -902,8 +1039,9 @@ class DoItFirst {
     if (continueBtn) {
       // Only enable the continue button if there are todos and all of them are completed
       const allTodosCompleted = this.todos.length > 0 && this.todos.every(todo => todo.completed);
-      
-      if (allTodosCompleted) {
+      const needsNewTask = this.newTaskSince && !this.todos.some(todo => todo.id >= this.newTaskSince);
+
+      if (allTodosCompleted && !needsNewTask) {
         continueBtn.removeAttribute('disabled');
         if (continueInfo) {
           continueInfo.textContent = 'Continue';
@@ -913,6 +1051,8 @@ class DoItFirst {
         if (continueInfo) {
           if (this.todos.length === 0) {
             continueInfo.textContent = 'Add and complete tasks to continue';
+          } else if (allTodosCompleted) {
+            continueInfo.textContent = 'Add a new task to continue';
           } else {
             const remainingTasks = this.todos.filter(todo => !todo.completed).length;
             continueInfo.textContent = `${remainingTasks} more task${remainingTasks !== 1 ? 's' : ''} remaining`;
@@ -1019,7 +1159,7 @@ class DoItFirst {
             <div class="todo-checkbox ${todo.completed ? 'checked' : ''}" tabindex="0" role="checkbox" aria-checked="${todo.completed}">
               ${todo.completed ? '<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.4669 3.72684C11.7558 3.91574 11.8369 4.30308 11.648 4.59198L7.39799 11.092C7.29783 11.2452 7.13556 11.3467 6.95402 11.3699C6.77247 11.3931 6.58989 11.3355 6.45446 11.2124L3.70446 8.71241C3.44905 8.48022 3.43023 8.08494 3.66242 7.82953C3.89461 7.57412 4.28989 7.55529 4.5453 7.78749L6.75292 9.79441L10.6018 3.90792C10.7907 3.61902 11.178 3.53795 11.4669 3.72684Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path></svg>' : ''}
             </div>
-            <span class="todo-text">${todo.text}</span>
+            <span class="todo-text"></span>
           </div>
           <button class="delete-todo" aria-label="Delete task">
             <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1028,6 +1168,7 @@ class DoItFirst {
           </button>
         `;
         
+        li.querySelector('.todo-text').textContent = todo.text;
         todoList.appendChild(li);
       });
     }
@@ -1042,58 +1183,20 @@ class DoItFirst {
 
   /**
    * Data Persistence
-   * Handles saving and loading todos from storage
+   * Handles saving todos to storage
    */
   saveTodos() {
-    chrome.storage.local.set({ todos: this.todos });
-  }
-
-  loadTodos() {
-    chrome.storage.local.get(['todos'], (result) => {
-      if (result.todos) {
-        this.todos = result.todos;
-      }
-    });
+    chrome.storage.sync.set({ todos: this.todos });
   }
 
   /**
    * Timer Control
-   * Handles timer reset and modal display
+   * Ends the session early. The time left is given up, so this can't buy extra time.
    */
   resetTimerAndShowModal() {
-    // Clear any existing timer
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = null;
-      
-      // Hide the reset button when timer stops
-      const resetBtn = document.getElementById('doitfirst-reset-btn');
-      if (resetBtn) {
-        resetBtn.classList.add('hidden');
-      }
+    if (!document.getElementById('doitfirst-modal')) {
+      this.endSession();
     }
-    
-    // Reset the timer to the configured duration
-    this.remainingTime = this.options.timerDuration;
-    
-    // Explicitly hide the timer display
-    const timerDisplay = document.getElementById('doitfirst-timer');
-    if (timerDisplay) {
-      timerDisplay.classList.remove('visible');
-      timerDisplay.style.opacity = '0';
-      timerDisplay.style.visibility = 'hidden';
-    }
-    
-    this.updateTimerDisplay();
-    
-    // Check if modal already exists
-    const existingModal = document.getElementById('doitfirst-modal');
-    if (!existingModal) {
-      // Show the modal only if it doesn't already exist
-      this.createModal();
-    }
-    
-    this.modalActive = true;
   }
 
   /**

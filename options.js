@@ -6,11 +6,17 @@ function saveOptions() {
   const enableYoutube = document.getElementById('enable-youtube').checked;
   const enableInstagram = document.getElementById('enable-instagram').checked;
   const enableTiktok = document.getElementById('enable-tiktok').checked;
+  const hideShorts = document.getElementById('hide-shorts').checked;
+  const hideHomeFeed = document.getElementById('hide-home-feed').checked;
+  const hideRecommendations = document.getElementById('hide-recommendations').checked;
   
   chrome.storage.sync.set(
     {
       alwaysShowModal: alwaysShowModal,
       clearTodosDaily: clearTodosDaily,
+      hideShorts: hideShorts,
+      hideHomeFeed: hideHomeFeed,
+      hideRecommendations: hideRecommendations,
       enabledPlatforms: {
         twitter: enableTwitter,
         youtube: enableYoutube,
@@ -38,6 +44,9 @@ function restoreOptions() {
     {
       alwaysShowModal: true,
       clearTodosDaily: false,
+      hideShorts: true,
+      hideHomeFeed: true,
+      hideRecommendations: true,
       enabledPlatforms: {
         twitter: true,
         youtube: true,
@@ -52,6 +61,9 @@ function restoreOptions() {
       document.getElementById('enable-youtube').checked = items.enabledPlatforms.youtube;
       document.getElementById('enable-instagram').checked = items.enabledPlatforms.instagram;
       document.getElementById('enable-tiktok').checked = items.enabledPlatforms.tiktok;
+      document.getElementById('hide-shorts').checked = items.hideShorts;
+      document.getElementById('hide-home-feed').checked = items.hideHomeFeed;
+      document.getElementById('hide-recommendations').checked = items.hideRecommendations;
     }
   );
 }

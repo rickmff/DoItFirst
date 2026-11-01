@@ -9,7 +9,7 @@
       --background-color: #121213;
       --card-background: #1a1a1b;
       --text-color: #9E9D9B;
-      --text-secondary: #292D35;
+      --text-secondary: #9E9D9B;
       --border-color: #292D35;
       --success-color: #4CAF50;
       --radius-sm: 4px;
@@ -42,6 +42,12 @@
       background-color: var(--card-background);
     }
     
+    h2 {
+      color: var(--text-color);
+      font-size: 16px;
+      margin-top: 0;
+    }
+
     label {
       display: block;
       margin-bottom: 10px;
@@ -135,6 +141,25 @@
       <input type="checkbox" id="enable-tiktok" checked>
       TikTok
     </label>
+  </div>
+
+  <div class="option-group">
+    <h2>YouTube</h2>
+    <label>
+      <input type="checkbox" id="hide-shorts" checked>
+      Hide Shorts
+    </label>
+    <p>Removes Shorts from the feed, search and sidebar, and opens Shorts links in the normal player.</p>
+    <label>
+      <input type="checkbox" id="hide-home-feed" checked>
+      Hide home feed
+    </label>
+    <p>Keeps search and subscriptions, but removes the recommended videos on the home page.</p>
+    <label>
+      <input type="checkbox" id="hide-recommendations" checked>
+      Hide recommended videos
+    </label>
+    <p>Removes suggestions next to the player, on the end screen and in fullscreen. Playlists and live chat stay.</p>
   </div>
   
   <button id="save">Save Options</button>
