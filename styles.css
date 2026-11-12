@@ -178,63 +178,6 @@
   border-color: var(--primary-color);
 }
 
-/* Keyboard shortcuts */
-#keyboard-shortcuts {
-  margin-bottom: 20px;
-  padding: 12px 16px;
-  background-color: rgba(18, 18, 19, 0.5);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-}
-
-#keyboard-shortcuts p {
-  margin: 0 0 8px 0;
-  font-size: 14px;
-  color: var(--text-color);
-  font-weight: 500;
-}
-
-#keyboard-shortcuts ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px 16px;
-}
-
-#keyboard-shortcuts li {
-  font-size: 13px;
-  color: var(--text-color);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
-}
-
-#keyboard-shortcuts li kbd + kbd {
-  margin-left: -4px;
-}
-
-.doitfirst-element kbd {
-  display: inline-block;
-  padding: 3px 6px;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
-  color: var(--primary-color);
-  background-color: var(--card-background);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
-}
-
-/* Responsive adjustments */
-@media (max-width: 500px) {
-  #keyboard-shortcuts ul {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 /* Focus styles for keyboard navigation */
 .todo-checkbox:focus-visible {
   outline: 2px solid var(--primary-color);
@@ -577,11 +520,6 @@ body:has(#doitfirst-modal) #doitfirst-floating-buttons {
   pointer-events: all;
 }
 
-#doitfirst-keyboard-btn {
-  display: none !important;
-}
-
-#doitfirst-keyboard-btn,
 #doitfirst-settings-btn,
 #doitfirst-reset-btn {
   width: 40px;
@@ -599,7 +537,6 @@ body:has(#doitfirst-modal) #doitfirst-floating-buttons {
   -webkit-backdrop-filter: blur(4px);
 }
 
-#doitfirst-keyboard-btn:hover,
 #doitfirst-settings-btn:hover,
 #doitfirst-reset-btn:hover {
   background-color: rgba(230, 180, 32, 0.1);
@@ -608,7 +545,6 @@ body:has(#doitfirst-modal) #doitfirst-floating-buttons {
   transform: translateY(-2px);
 }
 
-#doitfirst-keyboard-btn svg,
 #doitfirst-settings-btn svg,
 #doitfirst-reset-btn svg {
   width: 18px;
@@ -670,72 +606,6 @@ body:has(#doitfirst-modal) #doitfirst-floating-buttons {
   to {
     opacity: 1;
   }
-}
-
-/* Keyboard shortcuts tooltip */
-#doitfirst-keyboard-tooltip {
-  position: fixed;
-  background-color: rgba(18, 18, 19, 0.95);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 15px;
-  z-index: 1000001;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), visibility 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-#doitfirst-keyboard-tooltip.visible {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-#doitfirst-keyboard-tooltip h3 {
-  color: var(--primary-color);
-  margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-#doitfirst-keyboard-tooltip ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-#doitfirst-keyboard-tooltip li {
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  color: var(--text-color);
-  gap: 6px;
-}
-
-#doitfirst-keyboard-tooltip kbd {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(18, 18, 19, 0.8);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 2px 6px;
-  font-size: 12px;
-  min-width: 20px;
-  height: 20px;
-  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
-  font-family: var(--font-family);
-}
-
-#doitfirst-keyboard-tooltip li kbd + kbd {
-  margin-left: 4px;
 }
 
 /* Settings panel */

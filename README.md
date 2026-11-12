@@ -18,7 +18,6 @@
 - **Background playback counts**: a hidden tab only pauses the timer if nothing is playing
 - **Media pausing**: videos stop and fullscreen closes while the task list is open
 - **YouTube focus tools**: hide Shorts, the home feed and recommended videos
-- **Keyboard shortcuts**: add, navigate, complete and delete tasks without the mouse
 - **Synced**: tasks and settings follow your Chrome account
 
 ## Install

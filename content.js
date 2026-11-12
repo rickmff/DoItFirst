@@ -1,7 +1,7 @@
 /**
  * doitfirst - A Chrome extension combining todo list and timer functionality
  * Features:
- * - Todo list management with keyboard shortcuts
+ * - Todo list management
  * - Configurable Pomodoro-style timer
  * - Modal interface for focused task management
  * - Persistent settings and data storage
@@ -239,16 +239,6 @@ class DoItFirst {
       floatingButtons.id = 'doitfirst-floating-buttons';
       floatingButtons.classList.add('doitfirst-element');
       
-      // Keyboard shortcuts button
-      const keyboardBtn = document.createElement('button');
-      keyboardBtn.id = 'doitfirst-keyboard-btn';
-      keyboardBtn.setAttribute('aria-label', 'Keyboard Shortcuts');
-      keyboardBtn.innerHTML = `
-        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M13.5 4H1.5C1.22386 4 1 4.22386 1 4.5V10.5C1 10.7761 1.22386 11 1.5 11H13.5C13.7761 11 14 10.7761 14 10.5V4.5C14 4.22386 13.7761 4 13.5 4ZM1.5 3C0.671573 3 0 3.67157 0 4.5V10.5C0 11.3284 0.671573 12 1.5 12H13.5C14.3284 12 15 11.3284 15 10.5V4.5C15 3.67157 14.3284 3 13.5 3H1.5ZM2 5H3V6H2V5ZM4 5H5V6H4V5ZM6 5H7V6H6V5ZM8 5H9V6H8V5ZM10 5H11V6H10V5ZM12 5H13V6H12V5ZM2 7H3V8H2V7ZM4 7H5V8H4V7ZM6 7H7V8H6V7ZM8 7H9V8H8V7ZM10 7H11V8H10V7ZM12 7H3V10H12V7Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"/>
-        </svg>
-      `;
-      
       // Settings button
       const settingsBtn = document.createElement('button');
       settingsBtn.id = 'doitfirst-settings-btn';
@@ -273,28 +263,8 @@ class DoItFirst {
       // Initially hide the reset button
       resetBtn.classList.add('doitfirst-hidden');
       
-      floatingButtons.appendChild(keyboardBtn);
       floatingButtons.appendChild(settingsBtn);
       floatingButtons.appendChild(resetBtn);
-      
-      // Create keyboard shortcuts tooltip
-      const keyboardTooltip = document.createElement('div');
-      keyboardTooltip.id = 'doitfirst-keyboard-tooltip';
-      keyboardTooltip.classList.add('doitfirst-element');
-      keyboardTooltip.innerHTML = `
-        <h3>Keyboard Shortcuts</h3>
-        <ul>
-          <li><kbd>A</kbd> Focus input</li>
-          <li><kbd>C</kbd> Clear completed</li>
-          <li><kbd>Alt</kbd>+<kbd>T</kbd> Toggle task</li>
-          <li><kbd>D</kbd> Delete task</li>
-          <li><kbd>↑</kbd><kbd>↓</kbd> Navigate</li>
-          <li><kbd>Space</kbd> Toggle task</li>
-          <li><kbd>Delete</kbd> Delete task</li>
-          <li><kbd>Enter</kbd> Add/Continue</li>
-          <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd> Reset timer</li>
-        </ul>
-      `;
       
       // Create settings panel
       const settingsPanel = document.createElement('div');
@@ -361,7 +331,6 @@ class DoItFirst {
         </div>
       `;
       
-      document.body.appendChild(keyboardTooltip);
       document.body.appendChild(settingsPanel);
       document.body.appendChild(floatingButtons);
       
@@ -373,36 +342,6 @@ class DoItFirst {
       document.body.appendChild(timerDisplay);
       
       // Add event listeners for the buttons
-      keyboardBtn.addEventListener('mouseenter', () => {
-        const keyboardTooltip = document.getElementById('doitfirst-keyboard-tooltip');
-        if (keyboardTooltip) {
-          // Position the tooltip below the button
-          const btnRect = keyboardBtn.getBoundingClientRect();
-          keyboardTooltip.style.top = (btnRect.bottom + 10) + 'px';
-          keyboardTooltip.style.left = (btnRect.left) + 'px';
-          keyboardTooltip.classList.add('visible');
-        }
-      });
-      
-      keyboardBtn.addEventListener('mouseleave', () => {
-        const keyboardTooltip = document.getElementById('doitfirst-keyboard-tooltip');
-        if (keyboardTooltip) {
-          // Add a small delay before hiding to allow moving to the tooltip
-          setTimeout(() => {
-            // Check if mouse is over the tooltip
-            const isOverTooltip = document.querySelector('#doitfirst-keyboard-tooltip:hover');
-            if (!isOverTooltip) {
-              keyboardTooltip.classList.remove('visible');
-            }
-          }, 100);
-        }
-      });
-      
-      // Add event listener for the tooltip itself
-      keyboardTooltip.addEventListener('mouseleave', () => {
-        keyboardTooltip.classList.remove('visible');
-      });
-      
       settingsBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         const settingsPanel = document.getElementById('doitfirst-settings-panel');
@@ -672,121 +611,14 @@ class DoItFirst {
   }
 
   /**
-   * Keyboard Shortcuts
-   * Captured on window so the modal gets keys before the site's own hotkeys
+   * Site Hotkeys
+   * Captured on window so YouTube's hotkeys (k, j, l, space...) don't fire behind the modal
    */
   handleKeydown = (e) => {
-    const key = (e.key || '').toLowerCase();
-
-    // Ctrl+Shift+R to reset timer
-    if (key === 'r' && e.ctrlKey && e.shiftKey) {
-      e.preventDefault();
-      this.resetTimerAndShowModal();
-      return;
-    }
-
-    // Everything else belongs to the modal; leave the site's keys alone otherwise
-    if (!document.getElementById('doitfirst-modal')) {
-      return;
-    }
-
-    // Stop YouTube's hotkeys (k, j, l, space...) from firing behind the modal
-    e.stopPropagation();
-
-    // Don't trigger shortcuts if user is typing in an input or using Ctrl/Cmd combos
-    if (e.ctrlKey || e.metaKey || (e.target.tagName === 'INPUT' && e.key !== 'Enter')) {
-      return;
-    }
-
-    const continueBtn = document.getElementById('continue-procrastinate');
-
-    switch (key) {
-      case 'a': // Focus input
-        e.preventDefault();
-        document.getElementById('new-todo')?.focus();
-        break;
-
-      case 'c': // Clear completed
-        e.preventDefault();
-        this.clearCompleted();
-        break;
-
-      case 't': // Toggle selected task
-        if (e.altKey) {
-          e.preventDefault();
-          const focusedTodo = document.activeElement;
-          if (focusedTodo && focusedTodo.tagName === 'LI') {
-            const todoId = parseInt(focusedTodo.dataset.id);
-            this.toggleTodoStatus(todoId);
-          }
-        }
-        break;
-
-      case 'd':
-      case 'delete': // Delete task
-        e.preventDefault();
-        const focusedItem = document.activeElement;
-        if (focusedItem && focusedItem.tagName === 'LI') {
-          const todoId = parseInt(focusedItem.dataset.id);
-          this.deleteTodo(todoId);
-        }
-        break;
-
-      case 'arrowup': // Navigate up
-        e.preventDefault();
-        this.navigateTodos('up');
-        break;
-
-      case 'arrowdown': // Navigate down
-        e.preventDefault();
-        this.navigateTodos('down');
-        break;
-
-      case ' ': // Space to toggle task
-        const focused = document.activeElement;
-        if (focused && focused.tagName === 'LI') {
-          e.preventDefault();
-          const todoId = parseInt(focused.dataset.id);
-          this.toggleTodoStatus(todoId);
-        }
-        break;
-
-      case 'enter':
-        // If a todo item is focused, do nothing (let the click handler handle it)
-        if (document.activeElement.tagName === 'LI') {
-          return;
-        }
-        // If the continue button is focused and enabled, click it
-        if (document.activeElement === continueBtn && !continueBtn.disabled) {
-          e.preventDefault();
-          continueBtn.click();
-        }
-        break;
+    if (document.getElementById('doitfirst-modal')) {
+      e.stopPropagation();
     }
   };
-
-  navigateTodos(direction) {
-    const todoList = document.getElementById('todo-list');
-    const todos = Array.from(todoList.querySelectorAll('li'));
-    if (!todos.length) return;
-
-    const currentFocus = document.activeElement;
-    let currentIndex = todos.indexOf(currentFocus);
-
-    if (currentIndex === -1) {
-      // If no todo is focused, focus the first one
-      todos[0].focus();
-      return;
-    }
-
-    if (direction === 'up') {
-      currentIndex = Math.max(0, currentIndex - 1);
-    } else {
-      currentIndex = Math.min(todos.length - 1, currentIndex + 1);
-    }
-
-    todos[currentIndex].focus();
-  }
 
   /**
    * Media Control
