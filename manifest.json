@@ -3,6 +3,11 @@
     "name": "doitfirst",
     "version": "1.1",
     "description": "Block social media with a todo list until you finish your tasks, and hide YouTube Shorts and recommendations",
+    "icons": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
     "permissions": [
       "storage"
     ],
