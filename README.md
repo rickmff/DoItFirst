@@ -10,22 +10,19 @@
   <img src="assets/app.png" alt="The doitfirst task list blocking YouTube" width="720">
 </p>
 
-## Features
+A Chrome extension that blocks X, YouTube, Instagram and TikTok until your to-do list is done.
 
-- **Task gate**: covers X, YouTube, Instagram and TikTok until your tasks are done
-- **Session timer**: 25 minutes by default, then the site locks again
-- **No free refills**: the time left survives reloads and new tabs, and each new session needs a new task
-- **Background playback counts**: a hidden tab only pauses the timer if nothing is playing
-- **Media pausing**: videos stop and fullscreen closes while the task list is open
-- **YouTube focus tools**: hide Shorts, the home feed and recommended videos
-- **Synced**: tasks and settings follow your Chrome account
+- **Task gate**: complete your tasks to unlock the site
+- **Session timer**: 25 minutes, then it locks again and asks for a new task
+- **No loopholes**: reloading or opening a new tab doesn't refill the time
+- **YouTube focus**: hides Shorts, the home feed and recommended videos
 
 ## Install
 
-1. Clone this repository
-2. Open `chrome://extensions` and turn on **Developer mode**
-3. Click **Load unpacked** and select the repository folder
+Clone the repository, open `chrome://extensions`, turn on **Developer mode** and click **Load unpacked**.
+
+No account, no server, no tracking: see [PRIVACY.md](PRIVACY.md). Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT
+[MIT](LICENSE)
