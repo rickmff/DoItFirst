@@ -1,171 +1,231 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="utf-8">
   <title>doitfirst Options</title>
   <style>
     :root {
       --primary-color: #E6B420;
-      --primary-hover: #d1a31d;
-      --background-color: #121213;
-      --card-background: #1a1a1b;
-      --text-color: #9E9D9B;
-      --text-secondary: #9E9D9B;
-      --border-color: #292D35;
-      --success-color: #4CAF50;
-      --radius-sm: 4px;
-      --radius-md: 8px;
+      --background-color: #08090A;
+      --card-background: #101113;
+      --text-color: #F7F8F8;
+      --text-secondary: #8A8F98;
+      --text-tertiary: #62666D;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --success-color: #4CB782;
+      --radius-sm: 6px;
       --radius-lg: 12px;
-      --font-family: 'Roboto', sans-serif;
-    }
-    
-    body {
-      font-family: var(--font-family);
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 24px;
-      color: var(--text-color);
-      background-color: var(--background-color);
-    }
-    
-    h1 {
-      color: var(--primary-color);
-      font-size: 24px;
-      margin-bottom: 24px;
-      letter-spacing: -0.025em;
-    }
-    
-    .option-group {
-      margin-bottom: 24px;
-      padding: 20px;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-md);
-      background-color: var(--card-background);
-    }
-    
-    h2 {
-      color: var(--text-color);
-      font-size: 16px;
-      margin-top: 0;
+      --ease: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      --font-family: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
     }
 
-    label {
-      display: block;
-      margin-bottom: 10px;
-      font-weight: 600;
-      color: var(--text-color);
+    * {
+      box-sizing: border-box;
     }
-    
-    input[type="checkbox"] {
-      margin-right: 8px;
-      accent-color: var(--primary-color);
-    }
-    
-    p {
-      margin-top: 8px;
-      color: var(--text-secondary);
-      font-size: 14px;
-    }
-    
-    button {
-      padding: 12px 24px;
-      background-color: var(--primary-color);
-      color: var(--background-color);
-      border: none;
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s ease;
-      font-size: 16px;
+
+    body {
+      min-width: 420px;
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 24px;
       font-family: var(--font-family);
+      font-size: 13px;
+      line-height: 18px;
+      color: var(--text-color);
+      background-color: var(--background-color);
+      -webkit-font-smoothing: antialiased;
     }
-    
-    button:hover {
-      background-color: var(--primary-hover);
-      transform: translateY(-1px);
+
+    h1 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 24px;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 24px;
+      letter-spacing: -0.012em;
     }
-    
-    button:active {
-      transform: translateY(0);
+
+    h1 img {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
     }
-    
-    .status {
-      margin-top: 20px;
-      padding: 16px;
-      border-radius: var(--radius-md);
-      display: none;
-      background-color: var(--card-background);
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .option-group {
+      margin-bottom: 24px;
       border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      background-color: var(--card-background);
     }
-    
-    .success {
-      border-color: var(--success-color);
-      color: var(--success-color);
+
+    /* A row: text on the left, its switch on the right */
+    label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 44px;
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    label + label {
+      border-top: 1px solid var(--border-color);
+    }
+
+    label small {
       display: block;
+      margin-top: 2px;
+      font-size: 12px;
+      line-height: 16px;
+      color: var(--text-secondary);
+    }
+
+    input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      position: relative;
+      width: 26px;
+      height: 16px;
+      margin: 0;
+      flex-shrink: 0;
+      border-radius: 8px;
+      background-color: rgba(255, 255, 255, 0.14);
+      cursor: pointer;
+      transition: background-color 0.15s var(--ease);
+    }
+
+    input[type="checkbox"]::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #FFFFFF;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      transition: transform 0.15s var(--ease);
+    }
+
+    input[type="checkbox"]:checked {
+      background-color: var(--primary-color);
+    }
+
+    input[type="checkbox"]:checked::after {
+      transform: translateX(10px);
+    }
+
+    :focus-visible {
+      outline: 2px solid rgba(230, 180, 32, 0.6);
+      outline-offset: 2px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    button {
+      height: 32px;
+      padding: 0 14px;
+      border: none;
+      border-radius: 8px;
+      background-color: #E6E6E6;
+      color: #08090A;
+      font-family: var(--font-family);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.15s var(--ease);
+    }
+
+    button:hover {
+      background-color: #FFFFFF;
+    }
+
+    button:active {
+      background-color: #D4D4D4;
+    }
+
+    .status {
+      display: none;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .success {
+      display: block;
+      color: var(--success-color);
     }
   </style>
 </head>
 <body>
-  <h1>doitfirst Options</h1>
-  
+  <h1><img src="icons/icon48.png" alt="">doitfirst</h1>
+
+  <h2>General</h2>
   <div class="option-group">
     <label>
+      <span>Always show the task list<small>If off, it only appears once a day and when a session ends.</small></span>
       <input type="checkbox" id="always-show-modal">
-      Always show modal when visiting social media sites
     </label>
-    <p>If unchecked, the modal will only appear once per session.</p>
-  </div>
-  
-  <div class="option-group">
     <label>
+      <span>Clear completed tasks daily<small>Removes finished tasks at the start of each day.</small></span>
       <input type="checkbox" id="clear-todos-daily">
-      Clear completed todos daily
     </label>
-    <p>Automatically clear completed todos at the start of each day.</p>
   </div>
 
+  <h2>Sites</h2>
   <div class="option-group">
-    <h2>Enabled Platforms</h2>
     <label>
+      <span>X</span>
       <input type="checkbox" id="enable-twitter" checked>
-      Twitter/X
     </label>
     <label>
+      <span>YouTube</span>
       <input type="checkbox" id="enable-youtube" checked>
-      YouTube
     </label>
     <label>
+      <span>Instagram</span>
       <input type="checkbox" id="enable-instagram" checked>
-      Instagram
     </label>
     <label>
+      <span>TikTok</span>
       <input type="checkbox" id="enable-tiktok" checked>
-      TikTok
     </label>
   </div>
 
+  <h2>YouTube</h2>
   <div class="option-group">
-    <h2>YouTube</h2>
     <label>
+      <span>Hide Shorts<small>Removes Shorts from the feed, search and sidebar, and opens Shorts links in the normal player.</small></span>
       <input type="checkbox" id="hide-shorts" checked>
-      Hide Shorts
     </label>
-    <p>Removes Shorts from the feed, search and sidebar, and opens Shorts links in the normal player.</p>
     <label>
+      <span>Hide home feed<small>Keeps search and subscriptions, but removes the recommended videos on the home page.</small></span>
       <input type="checkbox" id="hide-home-feed" checked>
-      Hide home feed
     </label>
-    <p>Keeps search and subscriptions, but removes the recommended videos on the home page.</p>
     <label>
+      <span>Hide recommended videos<small>Removes suggestions next to the player, on the end screen and in fullscreen. Playlists and live chat stay.</small></span>
       <input type="checkbox" id="hide-recommendations" checked>
-      Hide recommended videos
     </label>
-    <p>Removes suggestions next to the player, on the end screen and in fullscreen. Playlists and live chat stay.</p>
   </div>
-  
-  <button id="save">Save Options</button>
-  
-  <div id="status" class="status"></div>
-  
+
+  <div class="actions">
+    <button id="save">Save</button>
+    <div id="status" class="status"></div>
+  </div>
+
   <script src="options.js"></script>
 </body>
-</html> 
+</html>
