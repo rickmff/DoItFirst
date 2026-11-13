@@ -7,7 +7,7 @@
 <p align="center">Finish your tasks before social media gets your time.</p>
 
 <p align="center">
-  <img src="assets/app.png" alt="The doitfirst task list blocking YouTube" width="720">
+<img width="1252" height="785" alt="image" src="https://github.com/user-attachments/assets/facf01c3-5aa7-453e-93b8-6fac46a6692c" />
 </p>
 
 A Chrome extension that blocks X, YouTube, Instagram and TikTok until your to-do list is done.
